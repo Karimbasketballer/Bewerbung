@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Interaktive PDF mit Layer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #pdf-container {
+      position: relative;
+    }
+
+    canvas {
+      border: 1px solid #888;
+      display: block;
+    }
+
+    #layerCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none;
+      pointer-events: none;
+    }
+
+    .hotspot {
+      position: absolute;
+      cursor: pointer;
+      background-color: rgba(0, 0, 0, 0);
+      transition: background-color 0.3s ease;
+      z-index: 10;
+    }
+
+    .hotspot:hover {
+      background-color: rgba(210, 160, 75, 0.3);
+    }
+
+    .hotspot::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 8px;
+      background: #222;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 16px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease-in-out;
+      z-index: 20;
+    }
+
+    .hotspot:hover::after {
+      opacity: 1;
+    }
+
+    #backButton {
+      width: 172px;
+      height: 83px;
+      position: fixed;
+      padding: 10px 18px;
+      font-size: 16px;
+      background-color: transparent;
+      color: black;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 100;
+      display: none;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    #backButton:hover {
+      background-color: rgba(210, 160, 75, 0.3);
+      border-color: rgba(210, 160, 75, 0.8);
+    }
+
+    .layer-hotspots {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+    }
+
+    .layer-hotspots .hotspot {
+      pointer-events: auto;
+    }
+
+    #coords {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #fff;
+      padding: 6px 12px;
+      border: 1px solid #aaa;
+      font-size: 14px;
+      font-family: monospace;
+      z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="pdf-container">
+    <canvas id="pdfCanvas"></canvas>
+    <canvas id="layerCanvas"></canvas>
+
+    <!-- Hotspots -->
+    <div class="hotspot" data-tooltip="Bachelorstudium" style="top: 128px; left: 30px; width: 247px; height: 198px;" onclick="toggleLayer('Bachelorstudium.pdf')"></div>
+    <div class="hotspot" data-tooltip="Über mich" style="top: 10px; left: 600px; width: 208px; height: 267px;" onclick="toggleLayer('Über_mich.pdf')"></div>
+    <div class="hotspot" data-tooltip="Wissenschaftliche Tätigkeit" style="top: 334px; left: 457px; width: 348px; height: 410px;" onclick="toggleLayer('Wissenschaftliche_Tätigkeit.pdf')"></div>
+    <div class="hotspot" data-tooltip="Berufserfahrung" style="top: 435px; left: 0px; width: 281px; height: 435px;" onclick="toggleLayer('Berufserfahrung.pdf')"></div>
+    <div class="hotspot" data-tooltip="Masterstudium" style="top: 885px; left: 0px; width: 322px; height: 498px;" onclick="toggleLayer('Masterstudium.pdf')"></div>
+    <div class="hotspot" data-tooltip="Motivation" style="top: 1085px; left: 419px; width: 383px; height: 336px;" onclick="toggleLayer('Motivation.pdf')"></div>
+
+    <!-- Zusätzliche Hotspots für zweites_v2.pdf -->
+    <div class="layer-hotspots" data-layer="Bachelorstudium.pdf">
+      <div class="hotspot" data-tooltip="Detail A" style="top: 400px; left: 100px; width: 200px; height: 150px;" onclick="toggleLayer('detail_a.pdf')"></div>
+      <div class="hotspot" data-tooltip="Detail B" style="top: 600px; left: 100px; width: 200px; height: 150px;" onclick="toggleLayer('detail_b.pdf')"></div>
+    </div>
+  </div>
+
+  <div id="coords">x: –, y: –</div>
+  <button id="backButton" onclick="closeLayer()"> </button>
+
+  <script type="module">
+    import * as pdfjsLib from './pdfjs/build/pdf.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdfjs/build/pdf.worker.mjs';
+
+    const mainCanvas = document.getElementById('pdfCanvas');
+    const layerCanvas = document.getElementById('layerCanvas');
+    const backButton = document.getElementById('backButton');
+    const coordsDisplay = document.getElementById('coords');
+
+    const hotspots = document.querySelectorAll('#pdf-container > .hotspot');
+    const layerGroups = document.querySelectorAll('.layer-hotspots');
+    const pdfUrl = './Deckblatt.pdf';
+
+    const backButtonPositions = {
+      'Bachelorstudium.pdf': { top: '1343px', left: '1751px' },
+      'Über_mich.pdf':       { top: '1343px', left: '1751px' },
+      'Wissenschaftliche_Tätigkeit.pdf': { top: '1346px', left: '1145px' },
+      'Berufserfahrung.pdf': {  top: '1343px', left: '1751px' },
+      'Masterstudium.pdf':   { top: '1343px', left: '1751px' },
+      'Motivation.pdf':      { top: '1308px', left: '1161px' }
+    };
+
+    async function renderPDF(url, canvas) {
+      const pdf = await pdfjsLib.getDocument(url).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 });
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+    }
+
+    renderPDF(pdfUrl, mainCanvas);
+
+    async function toggleLayer(layerPdf) {
+      await renderPDF(layerPdf, layerCanvas);
+      layerCanvas.style.display = 'block';
+      hotspots.forEach(h => h.style.display = 'none');
+
+      const pos = backButtonPositions[layerPdf] || {};
+      backButton.style.display = 'inline-block';
+      backButton.style.top = pos.top || '';
+      backButton.style.right = pos.right || '';
+      backButton.style.bottom = pos.bottom || '';
+      backButton.style.left = pos.left || '';
+      backButton.style.transform = pos.left === '50%' ? 'translateX(-50%)' : '';
+
+      layerGroups.forEach(group => {
+        group.style.display = group.dataset.layer === layerPdf ? 'block' : 'none';
+      });
+    }
+
+    function closeLayer() {
+      layerCanvas.style.display = 'none';
+      backButton.style.display = 'none';
+      hotspots.forEach(h => h.style.display = 'block');
+      layerGroups.forEach(group => group.style.display = 'none');
+    }
+
+    // Live-Mausposition im Canvas anzeigen
+    mainCanvas.addEventListener('mousemove', (e) => {
+      const rect = mainCanvas.getBoundingClientRect();
+      const x = Math.round(e.clientX - rect.left);
+      const y = Math.round(e.clientY - rect.top);
+      coordsDisplay.textContent = `x: ${x}, y: ${y}`;
+    });
+
+    window.toggleLayer = toggleLayer;
+    window.closeLayer = closeLayer;
+  </script>
+</body>
+</html>
