@@ -117,7 +117,7 @@
     <canvas id="pdfCanvas"></canvas>
     <canvas id="layerCanvas"></canvas>
 
-    <!-- Hotspots -->
+    <!-- Haupt-Hotspots -->
     <div class="hotspot" data-tooltip="Bachelorstudium" style="top: 128px; left: 30px; width: 247px; height: 198px;" onclick="toggleLayer('Bachelorstudium.pdf')"></div>
     <div class="hotspot" data-tooltip="Über mich" style="top: 10px; left: 600px; width: 208px; height: 267px;" onclick="toggleLayer('Über_mich.pdf')"></div>
     <div class="hotspot" data-tooltip="Wissenschaftliche Tätigkeit" style="top: 334px; left: 457px; width: 348px; height: 410px;" onclick="toggleLayer('Wissenschaftliche_Tätigkeit.pdf')"></div>
@@ -125,15 +125,16 @@
     <div class="hotspot" data-tooltip="Masterstudium" style="top: 885px; left: 0px; width: 322px; height: 498px;" onclick="toggleLayer('Masterstudium.pdf')"></div>
     <div class="hotspot" data-tooltip="Motivation" style="top: 1085px; left: 419px; width: 383px; height: 336px;" onclick="toggleLayer('Motivation.pdf')"></div>
 
-    <!-- Zusätzliche Hotspots für zweites_v2.pdf -->
-    <div class="layer-hotspots" data-layer="Bachelorstudium.pdf">
-      <div class="hotspot" data-tooltip="Detail A" style="top: 400px; left: 100px; width: 200px; height: 150px;" onclick="toggleLayer('detail_a.pdf')"></div>
-      <div class="hotspot" data-tooltip="Detail B" style="top: 600px; left: 100px; width: 200px; height: 150px;" onclick="toggleLayer('detail_b.pdf')"></div>
+    <!-- Zusätzliche Hotspots für Berufserfahrung -->
+    <div class="layer-hotspots" data-layer="Berufserfahrung.pdf">
+      <div class="hotspot" data-tooltip="Berufserfahrung1" style="top: 400px; left: 100px; width: 200px; height: 150px;" onclick="toggleLayer('Berufserfahrung_1.pdf')"></div>
+      <div class="hotspot" data-tooltip="Berufserfahrung2" style="top: 600px; left: 100px; width: 200px; height: 150px;" onclick="toggleLayer('Berufserfahrung_2.pdf')"></div>
+      <div class="hotspot" data-tooltip="Berufserfahrung3" style="top: 800px; left: 100px; width: 200px; height: 150px;" onclick="toggleLayer('Berufserfahrung_3.pdf')"></div>
     </div>
   </div>
 
   <div id="coords">x: –, y: –</div>
-  <button id="backButton" onclick="closeLayer()"> </button>
+  <button id="backButton" onclick="closeLayer()">Zurück</button>
 
   <script type="module">
     import * as pdfjsLib from './pdfjs/build/pdf.mjs';
@@ -148,13 +149,18 @@
     const layerGroups = document.querySelectorAll('.layer-hotspots');
     const pdfUrl = './Deckblatt.pdf';
 
+    let baseLayer = null;
+
     const backButtonPositions = {
       'Bachelorstudium.pdf': { top: '1343px', left: '1751px' },
       'Über_mich.pdf':       { top: '1343px', left: '1751px' },
       'Wissenschaftliche_Tätigkeit.pdf': { top: '1346px', left: '1145px' },
-      'Berufserfahrung.pdf': {  top: '1343px', left: '1751px' },
+      'Berufserfahrung.pdf': { top: '1343px', left: '1751px' },
       'Masterstudium.pdf':   { top: '1343px', left: '1751px' },
-      'Motivation.pdf':      { top: '1308px', left: '1161px' }
+      'Motivation.pdf':      { top: '1308px', left: '1161px' },
+      'Berufserfahrung_1.pdf': { top: '1343px', left: '1751px' },
+      'Berufserfahrung_2.pdf': { top: '1343px', left: '1751px' },
+      'Berufserfahrung_3.pdf': { top: '1343px', left: '1751px' }
     };
 
     async function renderPDF(url, canvas) {
@@ -173,17 +179,23 @@
       await renderPDF(layerPdf, layerCanvas);
       layerCanvas.style.display = 'block';
       hotspots.forEach(h => h.style.display = 'none');
+      backButton.style.display = 'inline-block';
 
       const pos = backButtonPositions[layerPdf] || {};
-      backButton.style.display = 'inline-block';
       backButton.style.top = pos.top || '';
       backButton.style.right = pos.right || '';
       backButton.style.bottom = pos.bottom || '';
       backButton.style.left = pos.left || '';
       backButton.style.transform = pos.left === '50%' ? 'translateX(-50%)' : '';
 
+      // Basis merken, wenn PDF Zusatzlayer enthält
+      if (layerPdf === 'Berufserfahrung.pdf') {
+        baseLayer = 'Berufserfahrung.pdf';
+      }
+
+      // Zeige nur die passenden Zusatz-Hotspots
       layerGroups.forEach(group => {
-        group.style.display = group.dataset.layer === layerPdf ? 'block' : 'none';
+        group.style.display = (baseLayer && group.dataset.layer === baseLayer) ? 'block' : 'none';
       });
     }
 
@@ -192,9 +204,9 @@
       backButton.style.display = 'none';
       hotspots.forEach(h => h.style.display = 'block');
       layerGroups.forEach(group => group.style.display = 'none');
+      baseLayer = null;
     }
 
-    // Live-Mausposition im Canvas anzeigen
     mainCanvas.addEventListener('mousemove', (e) => {
       const rect = mainCanvas.getBoundingClientRect();
       const x = Math.round(e.clientX - rect.left);
@@ -207,3 +219,5 @@
   </script>
 </body>
 </html>
+
+
