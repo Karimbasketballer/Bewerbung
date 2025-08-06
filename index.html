@@ -180,20 +180,18 @@
 
   <!-- Zusatzlayer für Berufserfahrung -->
   <div class="layer-hotspots" data-layer="Berufserfahrung.pdf">
-    <div class="hotspot2" style="top: 286px; left: 344px; width: 77px; height: 42px;" onclick="toggleLayer('Berufserfahrung_1.pdf', 'Berufserfahrung.pdf')"></div>
-    <div class="hotspot2" style="top: 453px; left: 345px; width: 77px; height: 42px;" onclick="toggleLayer('Berufserfahrung_2.pdf', 'Berufserfahrung.pdf')"></div>
-    <div class="hotspot2" style="top: 652px; left: 469px; width: 77px; height: 42px;" onclick="toggleLayer('Berufserfahrung_3.pdf', 'Berufserfahrung.pdf')"></div>
+    <div class="hotspot2" style="top: 271px; left: 321px; width: 77px; height: 42px;" onclick="toggleLayer('Berufserfahrung_1.pdf', 'Berufserfahrung.pdf')"></div>
+    <div class="hotspot2" style="top: 409px; left: 320px; width: 77px; height: 42px;" onclick="toggleLayer('Berufserfahrung_2.pdf', 'Berufserfahrung.pdf')"></div>
+    <div class="hotspot2" style="top: 650px; left: 437px; width: 77px; height: 42px;" onclick="toggleLayer('Berufserfahrung_3.pdf', 'Berufserfahrung.pdf')"></div>
   </div>
   
   <div class="layer-hotspots" data-layer="Wissenschaftliche_Tätigkeit.pdf">
     <div class="hotspot2" style="top: 852px; left: 270px; width: 77px; height: 42px;" onclick="toggleLayer('Wissenschaftliche_Tätigkeit_1.pdf', 'Wissenschaftliche_Tätigkeit.pdf')"></div>
   </div>
 
-  <button id="backButton" onclick="closeLayer()"/button>
-  <button id="lessButton" onclick=""/button>
+  <button id="backButton" onclick="closeLayer()"></button>
+  <button id="lessButton" onclick=""></button>
 </div>
-
-<div id="coords">x: –, y: –</div>
 
 <script type="module">
   import * as pdfjsLib from './pdfjs/build/pdf.mjs';
@@ -223,9 +221,9 @@
   };
 
   const lessButtonPositions = {
-    'Berufserfahrung_1.pdf': { top: '286px', left: '344px' },
-    'Berufserfahrung_2.pdf': { top: '456px', left: '351px' },
-    'Berufserfahrung_3.pdf': { top: '651px', left: '472px' }
+    'Berufserfahrung_1.pdf': { top: '276px', left: '318px' },
+    'Berufserfahrung_2.pdf': { top: '406px', left: '305px' },
+    'Berufserfahrung_3.pdf': { top: '645px', left: '441px' }
   };
   
   renderPDF(pdfUrl, mainCanvas);
@@ -291,7 +289,6 @@
 </script>
 </body>
 </html>
-
 
 
 
